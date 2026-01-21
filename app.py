@@ -9,24 +9,26 @@ from psel_scraper import scrape_psel_football
 
 # --- CONFIG & FONCTIONS SCRAPING ---
 
+import time
+
 @st.cache_data(ttl=600)
-def scrape_winamax_football_cached():
-    """Wrapper pour le scraper Winamax."""
+def scrape_winamax_football_cached(scrape_key=None):
+    """Wrapper pour le scraper Winamax (Depend on scrape_key for cache invalidation)."""
     return scrape_winamax_football()
 
 @st.cache_data(ttl=600)
-def scrape_psel_football_cached():
+def scrape_psel_football_cached(scrape_key=None):
     """Wrapper pour le scraper PSEL."""
     return scrape_psel_football()
 
 @st.cache_data(ttl=600)
-def scrape_betclic_early_win_cached():
+def scrape_betclic_early_win_cached(scrape_key=None):
     """Wrapper pour le scraper Selenium."""
     return scrape_betclic_early_win()
 
 # On utilise st.cache_data pour éviter de scraper à chaque interaction
 @st.cache_data(ttl=600) # Cache 10 minutes
-def scrape_betclic_football_cached():
+def scrape_betclic_football_cached(scrape_key=None):
     """Récupère les données et retourne une liste de dicts avec cotes et TJR."""
     url = "https://www.betclic.fr/football-sfootball"
     headers = {
@@ -169,25 +171,32 @@ with st.sidebar:
 
     if st.button("Lancer l'analyse", type="primary"):
         st.session_state.run_analysis = True
+        st.session_state.scrape_key = time.time() # Update key on click
 
 if 'run_analysis' not in st.session_state:
     st.session_state.run_analysis = False
+    
+if 'scrape_key' not in st.session_state:
+    st.session_state.scrape_key = 0 # Default key
 
 if st.session_state.run_analysis:
     matches = []
     
+    # Pass cache key to scrapers
+    key = st.session_state.scrape_key
+    
     if bookmaker == "Winamax":
         with st.spinner('Scraping Winamax (JSON API)...'):
-            matches = scrape_winamax_football_cached()
+            matches = scrape_winamax_football_cached(scrape_key=key)
 
     elif bookmaker == "PSEL":
         with st.spinner('Scraping Parions Sport En Ligne...'):
-            matches = scrape_psel_football_cached()
+            matches = scrape_psel_football_cached(scrape_key=key)
 
     elif bookmaker == "Betclic":
         if early_win:
             with st.spinner('Scraping et Fusion des cotes "Early Win" (Selenium)... Cela peut prendre quelques secondes.'):
-                raw_data = scrape_betclic_early_win_cached()
+                raw_data = scrape_betclic_early_win_cached(scrape_key=key)
                 
             if not raw_data:
                 st.error("Échec du scraping Early Win (Vérifiez les drivers/internet).")
@@ -227,7 +236,7 @@ if st.session_state.run_analysis:
 
         else:
             with st.spinner('Scraping Betclic...'):
-                matches = scrape_betclic_football_cached()
+                matches = scrape_betclic_football_cached(scrape_key=key)
     
     if not matches:
         st.error("Aucun match trouvé ou erreur de scraping.")
