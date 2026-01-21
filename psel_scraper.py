@@ -10,7 +10,13 @@ def scrape_psel_football():
     # Headers generic handled by cloudscraper
     try:
         # print(f"🔄 Connexion à PSEL...")
-        scraper = cloudscraper.create_scraper()
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True
+            }
+        )
         response = scraper.get(url)
         response.raise_for_status()
     except Exception as e:

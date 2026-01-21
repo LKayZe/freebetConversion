@@ -8,7 +8,14 @@ def scrape_winamax_football():
     
     print(f"🔄 Connexion à {url} (via Cloudscraper)...")
     try:
-        scraper = cloudscraper.create_scraper()
+        # Configuration spécifique pour mieux imiter un navigateur de bureau
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True
+            }
+        )
         response = scraper.get(url)
         response.raise_for_status()
     except Exception as e:

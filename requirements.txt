@@ -6,4 +6,5 @@ webdriver-manager
 pandas
 jinja2
 cloudscraper
+matplotlib
 
