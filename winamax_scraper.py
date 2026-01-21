@@ -1,49 +1,15 @@
 import requests
 import json
-
-def extract_winamax_json(html_text):
-    """Extraction robuste du JSON."""
-    prefix = "var PRELOADED_STATE = "
-    start_index = html_text.find(prefix)
-    if start_index == -1: return None
-    start_index += len(prefix)
-    brace_count = 0
-    in_string = False
-    escape = False
-    for i in range(start_index, len(html_text)):
-        char = html_text[i]
-        if char == '"' and not escape: in_string = not in_string
-        if char == '\\' and not escape: escape = True
-        else: escape = False
-        if not in_string:
-            if char == '{': brace_count += 1
-            elif char == '}':
-                brace_count -= 1
-                if brace_count == 0: return html_text[start_index:i+1]
-    return None
+import re
+import cloudscraper
 
 def scrape_winamax_football():
     url = "https://www.winamax.fr/paris-sportifs/sports/1"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept-Encoding': 'gzip, deflate',
-        'Referer': 'https://www.winamax.fr/paris-sportifs',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-User': '?1',
-        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-    }
-
-    print(f"🔄 Connexion à {url}...")
+    
+    print(f"🔄 Connexion à {url} (via Cloudscraper)...")
     try:
-        response = requests.get(url, headers=headers)
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(url)
         response.raise_for_status()
     except Exception as e:
         print(f"❌ Erreur : {e}")

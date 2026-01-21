@@ -283,13 +283,19 @@ if st.session_state.run_analysis:
             
             df_details = pd.DataFrame(best_details)
             # Format des colonnes
-            st.dataframe(
-                df_details.style.format({
-                    "Cote Totale": "{:.2f}", 
-                    "Mise Freebet (€)": "{:.2f}"
-                }).background_gradient(subset=["Mise Freebet (€)"], cmap="Greens"),
-                use_container_width=True
-            )
+            # Affichage simplifié et robuste
+            try:
+                st.dataframe(
+                    df_details.style.format({
+                        "Cote Totale": "{:.2f}",
+                        "Mise Freebet (€)": "{:.2f}"
+                    }).background_gradient(subset=["Mise Freebet (€)"], cmap="Greens"),
+                    use_container_width=True
+                )
+            except Exception as e:
+                # Fallback en cas d'erreur de style (ex: jinja2 manquant)
+                st.warning(f"Affichage simplifié (Erreur de style: {e})")
+                st.dataframe(df_details, use_container_width=True)
         else:
             st.warning("Aucune combinaison rentable trouvée.")
 else:

@@ -61,12 +61,28 @@ def scrape_betclic_early_win():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
+    # --- CONFIGURATION STREAMLIT CLOUD (LINUX) ---
+    import os
+    if os.path.exists("/usr/bin/chromium"):
+        options.binary_location = "/usr/bin/chromium"
+    
+    # Choix du Service Driver
+    service = None
+    if os.path.exists("/usr/bin/chromedriver"):
+        service = ChromeService("/usr/bin/chromedriver")
+    else:
+        # Fallback Local : WebDriverManager
+        try:
+             service = ChromeService(ChromeDriverManager().install())
+        except:
+             service = ChromeService() # Try default system path if manager fails
+
     try:
-        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+        driver = webdriver.Chrome(service=service, options=options)
+        log("✅ Chrome initialisé avec succès.")
     except Exception as e:
-        log(f"❌ Erreur lors de l'initialisation de Chrome: {e}")
-        log("Assurez-vous d'avoir Chrome et les drivers installés.")
-        return
+        log(f"❌ Erreur CRITIQUE init Chrome : {e}")
+        return []
 
     url = "https://www.betclic.fr/football-sfootball"
     log(f"🌐 Connexion à {url}...")
