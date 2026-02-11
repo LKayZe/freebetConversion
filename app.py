@@ -150,6 +150,51 @@ def calculate_conversion(triplet, target_gain):
 # --- INTERFACE STREAMLIT ---
 st.set_page_config(page_title="Freebet Optimizer", page_icon="💸", layout="wide")
 
+# CSS personnalisé pour un style Excel
+st.markdown("""
+<style>
+    /* Style général de la page */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 100%;
+    }
+    
+    /* Style des dataframes pour ressembler à Excel */
+    .stDataFrame {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Amélioration des tableaux */
+    div[data-testid="stDataFrame"] > div {
+        border: 2px solid #d0d0d0;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Style des métriques */
+    div[data-testid="stMetricValue"] {
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+    
+    /* Réduction de l'espacement */
+    .element-container {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Style des titres */
+    h1 {
+        padding-bottom: 0.5rem;
+    }
+    
+    h2, h3 {
+        padding-top: 0.5rem;
+        padding-bottom: 0.3rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("💸 Freebet Optimizer")
 st.markdown("Optimisez la conversion de vos freebets en cash garanti via une stratégie de couverture sur 3 matchs.")
 
@@ -269,42 +314,139 @@ if st.session_state.run_analysis:
         
         if best_combo:
             st.divider()
-            col1, col2 = st.columns([1, 2])
             
-            with col1:
-                st.metric(label="Taux de Conversion", value=f"{best_rate:.2f} %", delta="Excellent" if best_rate > 80 else "Moyen")
+            # Métriques principales en haut
+            metric_col1, metric_col2, metric_col3 = st.columns(3)
+            with metric_col1:
+                st.metric(label="🎯 Taux de Conversion", value=f"{best_rate:.2f} %", delta="Excellent" if best_rate > 80 else "Moyen")
+            with metric_col2:
                 total_fb = sum(d['Mise Freebet (€)'] for d in best_details)
-                st.metric(label="Total Freebets Requis", value=f"{total_fb:.2f} €")
-                st.metric(label="Gain Net Garanti", value=f"{target_gain:.2f} €")
-
-            with col2:
-                st.subheader("Matchs Sélectionnés")
-                for m in best_combo:
-                    st.markdown(f"**{m['title']}**")
-                    cols = st.columns(4)
-                    cols[0].caption(f"TJR: {m['tjr']:.2f}%")
-                    cols[1].markdown(f"1: **{m['odds_display'][0]}**")
-                    cols[2].markdown(f"N: **{m['odds_display'][1]}**")
-                    cols[3].markdown(f"2: **{m['odds_display'][2]}**")
+                st.metric(label="💰 Total Freebets Requis", value=f"{total_fb:.2f} €")
+            with metric_col3:
+                st.metric(label="✅ Gain Net Garanti", value=f"{target_gain:.2f} €")
             
             st.divider()
-            st.subheader("Répartition des Mises (27 combinaisons)")
             
-            df_details = pd.DataFrame(best_details)
-            # Format des colonnes
-            # Affichage simplifié et robuste
+            # Matchs sélectionnés en format tableau compact
+            st.subheader("⚽ Matchs Sélectionnés")
+            
+            matches_data = []
+            for m in best_combo:
+                matches_data.append({
+                    'Match': m['title'],
+                    'TJR (%)': f"{m['tjr']:.2f}",
+                    'Cote 1': m['odds_display'][0],
+                    'Cote N': m['odds_display'][1],
+                    'Cote 2': m['odds_display'][2]
+                })
+            
+            df_matches = pd.DataFrame(matches_data)
+            
             try:
                 st.dataframe(
-                    df_details.style.format({
+                    df_matches.style.set_properties(**{
+                        'text-align': 'center',
+                        'font-size': '14px',
+                        'border': '1px solid #d0d0d0'
+                    }).set_table_styles([
+                        {'selector': 'th', 'props': [
+                            ('background-color', '#2196F3'),
+                            ('color', 'white'),
+                            ('font-weight', 'bold'),
+                            ('text-align', 'center'),
+                            ('border', '1px solid #d0d0d0'),
+                            ('padding', '10px')
+                        ]},
+                        {'selector': 'td', 'props': [
+                            ('padding', '8px'),
+                            ('border', '1px solid #e0e0e0')
+                        ]},
+                        {'selector': 'tr:hover', 'props': [
+                            ('background-color', '#e3f2fd')
+                        ]}
+                    ]),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            except Exception as e:
+                st.dataframe(df_matches, use_container_width=True, hide_index=True)
+            
+            st.divider()
+            st.subheader("📊 Répartition des Mises (27 combinaisons)")
+            
+            df_details = pd.DataFrame(best_details)
+            
+            # Diviser le tableau en 3 colonnes de 9 lignes pour affichage compact
+            col_a, col_b, col_c = st.columns(3)
+            
+            # Format des colonnes
+            try:
+                # Styling Excel-like avec bordures et alternance de couleurs
+                def style_dataframe(df):
+                    return df.style.format({
                         "Cote Totale": "{:.2f}",
                         "Mise Freebet (€)": "{:.2f}"
-                    }).background_gradient(subset=["Mise Freebet (€)"], cmap="Greens"),
-                    use_container_width=True
-                )
+                    }).background_gradient(
+                        subset=["Mise Freebet (€)"], 
+                        cmap="Greens",
+                        vmin=df["Mise Freebet (€)"].min(),
+                        vmax=df["Mise Freebet (€)"].max()
+                    ).set_properties(**{
+                        'text-align': 'center',
+                        'font-size': '13px',
+                        'border': '1px solid #d0d0d0'
+                    }).set_table_styles([
+                        {'selector': 'th', 'props': [
+                            ('background-color', '#4CAF50'),
+                            ('color', 'white'),
+                            ('font-weight', 'bold'),
+                            ('text-align', 'center'),
+                            ('border', '1px solid #d0d0d0'),
+                            ('padding', '8px')
+                        ]},
+                        {'selector': 'td', 'props': [
+                            ('padding', '6px'),
+                            ('border', '1px solid #e0e0e0')
+                        ]},
+                        {'selector': 'tr:hover', 'props': [
+                            ('background-color', '#f5f5f5')
+                        ]}
+                    ])
+                
+                # Affichage en 3 colonnes
+                with col_a:
+                    st.caption("**Combinaisons 1-9**")
+                    st.dataframe(
+                        style_dataframe(df_details.iloc[0:9]),
+                        height=400,
+                        use_container_width=True
+                    )
+                
+                with col_b:
+                    st.caption("**Combinaisons 10-18**")
+                    st.dataframe(
+                        style_dataframe(df_details.iloc[9:18]),
+                        height=400,
+                        use_container_width=True
+                    )
+                
+                with col_c:
+                    st.caption("**Combinaisons 19-27**")
+                    st.dataframe(
+                        style_dataframe(df_details.iloc[18:27]),
+                        height=400,
+                        use_container_width=True
+                    )
+                    
             except Exception as e:
                 # Fallback en cas d'erreur de style (ex: jinja2 manquant)
                 st.warning(f"Affichage simplifié (Erreur de style: {e})")
-                st.dataframe(df_details, use_container_width=True)
+                with col_a:
+                    st.dataframe(df_details.iloc[0:9], use_container_width=True)
+                with col_b:
+                    st.dataframe(df_details.iloc[9:18], use_container_width=True)
+                with col_c:
+                    st.dataframe(df_details.iloc[18:27], use_container_width=True)
         else:
             st.warning("Aucune combinaison rentable trouvée.")
 else:
