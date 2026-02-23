@@ -4,8 +4,7 @@ import time
 import cloudscraper
 
 def scrape_psel_football():
-    # URL fournie par l'utilisateur
-    url = "https://www.enligne.parionssport.fdj.fr/paris-football?titre=Top%20Foot%20Europ%C3%A9en&ids=58535089,58941152,58531076,58532497,58532492,58554102,58545066,58531576,58531497,58531570,58551460,58532401,58551616,58532453,58558744,58532237,58626935,58602842,58529754,58608172,58529890,58529612,58544781,58529747,58530875,58531060,58559084,58576401"
+    url = "https://www.enligne.parionssport.fdj.fr/paris-football"
     
     # Headers generic handled by cloudscraper
     try:
