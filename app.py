@@ -291,20 +291,46 @@ if st.session_state.run_analysis:
             st.subheader("Répartition des Mises (27 combinaisons)")
             
             df_details = pd.DataFrame(best_details)
-            # Format des colonnes
-            # Affichage simplifié et robuste
-            try:
-                st.dataframe(
-                    df_details.style.format({
-                        "Cote Totale": "{:.2f}",
-                        "Mise Freebet (€)": "{:.2f}"
-                    }).background_gradient(subset=["Mise Freebet (€)"], cmap="Greens"),
-                    use_container_width=True
-                )
-            except Exception as e:
-                # Fallback en cas d'erreur de style (ex: jinja2 manquant)
-                st.warning(f"Affichage simplifié (Erreur de style: {e})")
-                st.dataframe(df_details, use_container_width=True)
+            
+            # Affichage en 3 lignes × 9 colonnes, groupé par résultat du Match 1
+            group_labels = ["Match 1 → 1", "Match 1 → N", "Match 1 → 2"]
+            groups = [df_details.iloc[i*9:(i+1)*9].reset_index(drop=True) for i in range(3)]
+            
+            # CSS pour masquer les en-têtes et styliser les tableaux
+            st.markdown("""
+            <style>
+                .stTable thead { display: none; }
+                .stTable td, .stTable th {
+                    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+                    text-align: center !important;
+                }
+                /* Couleur par ligne */
+                .stTable tbody tr:nth-child(1) td,
+                .stTable tbody tr:nth-child(1) th {
+                    background-color: rgba(59, 130, 246, 0.25) !important;
+                }
+                .stTable tbody tr:nth-child(2) td,
+                .stTable tbody tr:nth-child(2) th {
+                    background-color: rgba(249, 115, 22, 0.25) !important;
+                }
+                .stTable tbody tr:nth-child(3) td,
+                .stTable tbody tr:nth-child(3) th {
+                    background-color: rgba(34, 197, 94, 0.25) !important;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            for group_df, label in zip(groups, group_labels):
+                st.markdown(f"**{label}**")
+                # Transposer : colonnes = les 9 combinaisons, lignes = Issue / Cote / Mise
+                transposed = pd.DataFrame({
+                    j: [
+                        group_df.iloc[j]["Issue"],
+                        f"{group_df.iloc[j]['Cote Totale']:.2f}",
+                        f"{group_df.iloc[j]['Mise Freebet (€)']:.2f} €"
+                    ] for j in range(len(group_df))
+                }, index=["Issue", "Cote Totale", "Mise Freebet"])
+                st.table(transposed)
         else:
             st.warning("Aucune combinaison rentable trouvée.")
 else:
