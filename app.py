@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import itertools
 import pandas as pd
-from streamlit_sortables import sort_items
 from betclic_early_win_scraper import scrape_betclic_early_win
 from winamax_scraper import scrape_winamax_football
 from psel_scraper import scrape_psel_football
